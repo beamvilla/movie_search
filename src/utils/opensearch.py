@@ -26,11 +26,12 @@ def send_request(
     method: str,
     user: str,
     password: str,
+    endpoint: str,
     json_data: Mapping[str, Any] = {},
     host: str = LOCALHOST,
     port: int = OPENSEARCH_PORT
 ) -> requests.Response:
-    url = f"{host}:{port}"
+    url = f"{host}:{port}/{endpoint}"
     auth = HTTPBasicAuth(user, password)
     response = REQUEST_METHOD[method](
         url=url,
@@ -45,10 +46,11 @@ def send_request(
 def delete(
     user: str,
     password: str,
+    endpoint: str,
     host: str = LOCALHOST,
     port: int = OPENSEARCH_PORT
 ) -> requests.Response:
-    url = f"{host}:{port}"
+    url = f"{host}:{port}/{endpoint}"
     auth = HTTPBasicAuth(user, password)
     response = requests.delete(
         url=url,
