@@ -13,9 +13,10 @@ from config.config import Config, GPTModelConfig
 
 class MovieSearcher:
     def __init__(self, config: Config) -> None:
+        self.config = config
         self.openai_repo = OpenAIRepository()
-        self.opensearch_config = config.opensearch_config
-        self.openai_config = config.openai_config
+        self.opensearch_config = self.config.opensearch_config
+        self.openai_config = self.config.openai_config
 
         self.opensearch_repo = OpensearchRepository(
             config=self.opensearch_config
@@ -121,10 +122,35 @@ class MovieSearcher:
                 director_name=director_name
             )
         
-    def summarize_search(self, search_results: List[Dict[str, Any]]) -> str:
-        pass
+    def summarize_search(
+        self, 
+        query: str,
+        search_results: List[Dict[str, Any]],
+        model_config: GPTModelConfig
+    ) -> str:
+        all_search_movie_description_results = "- "
+        n_results = len(search_results)
+
+        for i, search_result in enumerate(search_results):
+            movie_description = search_result["_source"]["movie_description"]
+            all_search_movie_description_results += movie_description
+
+            if i < n_results - 1:
+                all_search_movie_description_results += "\n- "
+
+        prompt = get_summarize_search_results_prompt(
+            query=query,
+            all_search_movie_description_results=all_search_movie_description_results
+        )
+        summarized_search_results = self.openai_repo.send_request(
+            prompt=prompt,
+            model_config=model_config
+        )
+        return summarized_search_results
 
     def search(self, query: str):
+        summarized_search_results = None
+        
         # query_metadata = self.extract_query_metadata(
         #     query=query,
         #     model_config=self.openai_config.extract_query_metadata_model
@@ -136,7 +162,13 @@ class MovieSearcher:
             query_metadata=query_metadata,
             query=query
         )
-        print(json.dumps(search_results, indent=4, ensure_ascii=False))
+        
+        if self.config.summarize_search is True:
+            summarized_search_results = self.summarize_search(
+                query=query,
+                search_results=search_results,
+                model_config=self.openai_config.summarize_search
+            )
 
 
            

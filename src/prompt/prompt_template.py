@@ -22,3 +22,18 @@ def get_extract_query_metadata_prompt(query: str) -> str:
     query: {query}
     """
     return prompt
+
+
+def get_summarize_search_results_prompt(
+    query: str,
+    all_search_movie_description_results: str
+) -> str:
+    return f"""
+    You are a helpful assistant. 
+    The user searched for movies with the query: '{query}'. 
+    Based on the following movie descriptions from the search results, 
+    generate a short, user-friendly summary (2–3 sentences) that explains what kind of movies are shown:
+    
+    all search movie description results:
+    {all_search_movie_description_results}
+    """

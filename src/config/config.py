@@ -35,6 +35,6 @@ class Config:
         self.opensearch_config = OpensearchConfig(config_file["OPENSEARCH_CONFIG"])
         self.openai_config = OpenAIConfig(config_file["OPENAI_CONFIG"])
         
-        self.summarize_saerch = config_file["SUMMARIZE_SEARCH"]
+        self.summarize_search = config_file["SUMMARIZE_SEARCH"]
         self.extract_query_metadata = config_file["EXTRACT_QUERY_METADATA"]
         self.rerank_search = config_file["RERANK_SEARCH"]
