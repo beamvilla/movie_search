@@ -169,6 +169,7 @@ class MovieSearcher:
                 search_results=search_results,
                 model_config=self.openai_config.summarize_search
             )
+            print(summarized_search_results)
 
 
            
