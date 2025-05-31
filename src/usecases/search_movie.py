@@ -8,7 +8,7 @@ from prompt.prompt_template import *
 from utils.common import convert_text_to_json
 from utils.log_utils import get_logger
 from repository.opensearch import OpensearchRepository
-from config.config import Config
+from config.config import Config, GPTModelConfig
 
 
 class MovieSearcher:
@@ -26,7 +26,7 @@ class MovieSearcher:
     def extract_query_metadata(
         self, 
         query: str,
-        model_name: str
+        model_config: GPTModelConfig
     ) -> Dict[str, str]:
         query_metadata = {
             "movie_title": None,
@@ -40,7 +40,7 @@ class MovieSearcher:
         prompt = get_extract_query_metadata_prompt(query=query)
         response = self.openai_repo.send_request(
             prompt=prompt,
-            model=model_name
+            model_config=model_config
         )
         try:
             query_metadata = convert_text_to_json(response)
@@ -120,13 +120,16 @@ class MovieSearcher:
                 movie_title=movie_title,
                 director_name=director_name
             )
+        
+    def summarize_search(self, search_results: List[Dict[str, Any]]) -> str:
+        pass
 
     def search(self, query: str):
         # query_metadata = self.extract_query_metadata(
         #     query=query,
-        #     model_name=self.openai_config.extract_query_metadata_model
+        #     model_config=self.openai_config.extract_query_metadata_model
         # )
-
+       
         query_metadata = {'movie_title': 'Avatar', 'director_name': None, 'genres': None, 'keywords': ['plot', 'like', 'Avatar'], 'year': None, 'content_rating': None, 'same_attributes_as': True}
 
         search_results = self.search_agent(

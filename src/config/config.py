@@ -3,9 +3,16 @@ from typing import Mapping, Union, List
 from utils import load_yaml_file
 
 
+class GPTModelConfig:
+    def __init__(self, _config: Mapping[str, Union[str, float]]) -> None:
+        self.model = _config["MODEL"]
+        self.temperature = _config["TEMPERATURE"]
+
+
 class OpenAIConfig:
     def __init__(self, _config: Mapping[str, str]) -> None:
-        self.extract_query_metadata_model = _config["EXTRACT_QUERY_METADATA_MODEL"]
+        self.extract_query_metadata_model = GPTModelConfig(_config=_config["EXTRACT_QUERY_METADATA_MODEL"])
+        self.summarize_search = GPTModelConfig(_config=_config["SUMMARIZE_SEARCH"])
 
 
 class OpensearchConfig:
@@ -24,6 +31,10 @@ class OpensearchConfig:
 
 class Config:
     def __init__(self, config_path: str = "./config/config.yaml") -> None:
-        self.config_file = load_yaml_file(config_path)
-        self.opensearch_config = OpensearchConfig(self.config_file["OPENSEARCH_CONFIG"])
-        self.openai_config = OpenAIConfig(self.config_file["OPENAI_CONFIG"])
+        config_file = load_yaml_file(config_path)
+        self.opensearch_config = OpensearchConfig(config_file["OPENSEARCH_CONFIG"])
+        self.openai_config = OpenAIConfig(config_file["OPENAI_CONFIG"])
+        
+        self.summarize_saerch = config_file["SUMMARIZE_SEARCH"]
+        self.extract_query_metadata = config_file["EXTRACT_QUERY_METADATA"]
+        self.rerank_search = config_file["RERANK_SEARCH"]

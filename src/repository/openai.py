@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from typing import Optional, Union, List, Dict
 
 from utils.log_utils import get_logger
+from config.config import GPTModelConfig
 
 
 class OpenAIRepository:
@@ -14,12 +15,13 @@ class OpenAIRepository:
     def send_request(
         self, 
         prompt: Union[List[Dict[str, str]], str],
-        model: str = "gpt-4.1"
+        model_config: GPTModelConfig
     ) -> Optional[str]:
         try:
             response = self.client.responses.create(
-                model=model,
-                input=prompt
+                model=model_config.model,
+                input=prompt,
+                temperature=model_config.temperature
             )
         except Exception as err:
             get_logger().error("Error to send request to OpenAI")
