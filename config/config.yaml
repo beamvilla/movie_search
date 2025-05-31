@@ -1,0 +1,14 @@
+OPENSEARCH_CONFIG:
+  HOST: https://localhost
+  PORT: 9200
+  USER_ENV: opensearch_user
+  USER_PASSWORD_ENV: opensearch_password
+  MODEL_ID: _OAVIpcBpsdikrt2f51X
+  EXCLUDES:
+    - movie_description_embedding
+  K: 20
+  SIZE: 20
+  INDEX_NAME: movie-search-index
+  HYBRID_SEARCH_PIPELINE_NAME: hybrid-search-pipeline
+
+OPENAI_CONFIG:

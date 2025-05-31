@@ -1,6 +1,11 @@
 from usecases.search_movie import MovieSearcher
+from config.config import Config
 
+config = Config()
 
 if __name__ == "__main__":
-    movie_searcher = MovieSearcher()
-    movie_searcher.extract_query_metadata(query="Plot same as Nolan directed")
+    movie_searcher = MovieSearcher(config=config)
+    movie_searcher.search(
+        query="Plot same as Nolan directed",
+        extract_query_metadata_model="gpt-4.1"
+    )

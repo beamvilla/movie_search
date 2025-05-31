@@ -11,19 +11,17 @@
                     "movie_description_embedding": {
                         "query_text": "robot",
                         "k": 100,
-                        "model_id": "_OAVIpcBpsdikrt2f51X"
+                        "model_id": "xxx"
                     }
                 }
             },
             "filter": [
                 {
                     "term": {
-                        "director_name": "Michael Bay"
-                    }
-                },
-                {
-                    "term": {
-                        "title_year": "1998"
+                        "director_name": {
+                          "value": "michael bay",
+                          "case_insensitive": true
+                        }
                     }
                 }
             ]

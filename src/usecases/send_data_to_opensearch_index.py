@@ -1,11 +1,10 @@
-import os
 import pandas as pd
 from dotenv import load_dotenv
 from typing import Optional
 from tqdm import tqdm
 
 from src.utils.common import return_none_when_is_nan
-from repository.opensearch import send_request
+from repository.opensearch import OpensearchRepository, LOCALHOST, OPENSEARCH_PORT
 
 
 class OpensearchIndexer:
@@ -13,18 +12,20 @@ class OpensearchIndexer:
         self,
         index_name: str,
         dataset_path: str,
-        opensearch_host: str = "https://localhost",
-        opensearch_port: int = 9200,
+        opensearch_host: str = LOCALHOST,
+        opensearch_port: int = OPENSEARCH_PORT,
         opensearch_user_env: str = "user",
         opensearch_password_env: str = "password"
     ) -> None:
         load_dotenv()
 
         self.movie_df = pd.read_csv(dataset_path)
-        self.opensearch_user = os.getenv(opensearch_user_env)
-        self.opensearch_password = os.getenv(opensearch_password_env)
-        self.opensearch_host = opensearch_host
-        self.opensearch_port = opensearch_port
+        self.opensearch_repo = OpensearchRepository(
+            host=opensearch_host,
+            port=opensearch_port,
+            user_env=opensearch_user_env,
+            password_env=opensearch_password_env
+        )
         self.index_name = index_name
 
     def send_data_to_index(self, limit: Optional[int] = None):
@@ -72,14 +73,10 @@ class OpensearchIndexer:
                 "content_rating": content_rating,
                 "movie_description": movie_description
             }
-            response = send_request(
+            response = self.opensearch_repo.send_request(
                 method="put",
-                user=self.opensearch_user,
-                password=self.opensearch_password,
                 endpoint=f"{self.index_name}/_doc/{idx}",
-                json_data=json_data,
-                host=self.opensearch_host,
-                port=self.opensearch_port
+                json_data=json_data
             )
             idx += 1
     

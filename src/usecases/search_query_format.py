@@ -3,7 +3,6 @@ from typing import List, Dict, Any, Mapping
 
 def get_semantic_search_format(
     query_text: str,
-    embedding_field: str,
     model_id: str,
     excludes_fields: List[str] = [],
     k: int = 100,
@@ -15,7 +14,7 @@ def get_semantic_search_format(
         },
         "query": {
             "neural": {
-                embedding_field: {
+                "movie_description_embedding": {
                     "query_text": query_text,
                     "k": k,
                     "model_id": model_id
@@ -46,13 +45,11 @@ def get_filter_search_format(
 
 def get_hybrid_search_format(
     query_text: str,
-    text_field: str,
-    embedding_field: str,
     model_id: str,
     excludes_fields: List[str] = [],
     k: int = 100,
     size: int = 100
-):
+) -> Dict[str, Any]:
     return {
         "_source": {
             "excludes": excludes_fields
@@ -62,14 +59,14 @@ def get_hybrid_search_format(
                 "queries": [
                     {
                         "match": {
-                            text_field: {
+                            "movie_description": {
                                 "query": query_text
                             }
                         }
                     },
                     {
                         "neural": {
-                            embedding_field: {
+                            "movie_description_embedding": {
                                 "query_text": query_text,
                                 "model_id": model_id,
                                 "k": k
@@ -81,3 +78,34 @@ def get_hybrid_search_format(
         },
         "size": size
     }
+
+
+def get_semantic_search_with_must_not_term_format(
+    query_text: str,
+    model_id: str,
+    filter_list: List[str] = [],
+    excludes_fields: List[str] = [],
+    k: int = 100,
+    size: int = 100
+) -> Dict[str, Any]:
+    return {
+        "_source": {
+            "excludes": excludes_fields
+        },
+        "query": {
+            "bool": {
+                "must": {
+                    "neural": {
+                        "movie_description_embedding": {
+                            "query_text": query_text,
+                            "k": k,
+                            "model_id": model_id
+                        }
+                    }
+                },
+                "must_not": filter_list
+            }
+        },
+        "size": size
+    }
+ 
