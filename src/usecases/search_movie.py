@@ -34,7 +34,7 @@ class MovieSearcher:
             return query_metadata
         
         print(json_response)
-        print(json_response["movie_title"])
+
 
 
     def search(self, query: str):

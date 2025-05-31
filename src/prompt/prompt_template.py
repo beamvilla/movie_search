@@ -12,7 +12,9 @@ def get_extract_query_metadata_prompt(query: str) -> str:
         'R', nan, 'TV-14', 'TV-PG', 'TV-MA', 'TV-G',
        'Not Rated', 'Unrated', 'Approved', 'TV-Y', 'NC-17', 'X', 'TV-Y7',
        'GP', 'Passed', 'M'
-    same_attributes_as (bool): The query requires to find others similar movie or not. If requires answer true
+    same_attributes_as (bool): Return true only if the user query explicitly asks to find movies similar 
+    to a specific movie title, director name or movie mentioned in the query, such as queries containing phrases like 
+    "movie like <movie_title>", "similar to <movie_title>", or "movies similar to <movie_title>". 
 
     Note: from each above metadata, If can't extract, please answer null
 
