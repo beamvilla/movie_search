@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 import json
 import requests
 
@@ -15,6 +15,8 @@ class MovieSearcher:
     def __init__(self, config: Config) -> None:
         self.openai_repo = OpenAIRepository()
         self.opensearch_config = config.opensearch_config
+        self.openai_config = config.openai_config
+
         self.opensearch_repo = OpensearchRepository(
             config=self.opensearch_config
         )
@@ -59,6 +61,49 @@ class MovieSearcher:
         get_logger().error("Search error with status_code: ", status_code)
         return []
     
+    def search_with_same_attribute(
+        self,
+        query: str,
+        movie_title: Optional[str],
+        director_name: Optional[str]
+    ):
+        filter_list = []
+        if movie_title is not None:
+            filter_list.append({
+                "term": {
+                    "movie_title": {
+                        "value": movie_title,
+                        "case_insensitive": True
+                    }
+                }
+            })
+        
+        if director_name is not None:
+            filter_list.append({
+                "term": {
+                    "director_name": {
+                        "value": director_name,
+                        "case_insensitive": True
+                    }
+                }
+            })
+
+        search_query = get_semantic_search_with_must_not_term_format(
+            query_text=query,
+            model_id=self.opensearch_config.model_id,
+            filter_list=filter_list,
+            excludes_fields=self.opensearch_config.excludes,
+            k=self.opensearch_config.k,
+            size=self.opensearch_config.size
+        )
+        search_response = self.opensearch_repo.send_request(
+            method="get",
+            endpoint=f"{self.movie_index_name}/_search",
+            json_data=search_query
+        )    
+        search_results = self.get_search_results(search_response=search_response)
+        return search_results
+    
     def search_agent(
         self, 
         query_metadata: Dict[str, Union[str, List[str], bool]],
@@ -70,52 +115,16 @@ class MovieSearcher:
 
         if same_attributes_as is True and \
             (movie_title is not None or director_name is not None):
-            filter_list = []
-            if movie_title is not None:
-                filter_list.append({
-                    "term": {
-                        "movie_title": {
-                          "value": movie_title,
-                          "case_insensitive": True
-                        }
-                    }
-                })
-            
-            if director_name is not None:
-                filter_list.append({
-                    "term": {
-                        "director_name": {
-                          "value": director_name,
-                          "case_insensitive": True
-                        }
-                    }
-                })
-
-            search_query = get_semantic_search_with_must_not_term_format(
-                query_text=query,
-                model_id=self.opensearch_config.model_id,
-                filter_list=filter_list,
-                excludes_fields=self.opensearch_config.excludes,
-                k=self.opensearch_config.k,
-                size=self.opensearch_config.size
+            return self.search_with_same_attribute(
+                query=query,
+                movie_title=movie_title,
+                director_name=director_name
             )
-            search_response = self.opensearch_repo.send_request(
-                method="get",
-                endpoint=f"{self.movie_index_name}/_search",
-                json_data=search_query
-            )
-            
-            search_results = self.get_search_results(search_response=search_response)
-            return search_results
 
-    def search(
-        self, 
-        query: str,
-        extract_query_metadata_model: str
-    ):
+    def search(self, query: str):
         # query_metadata = self.extract_query_metadata(
         #     query=query,
-        #     model_name=extract_query_metadata_model
+        #     model_name=self.openai_config.extract_query_metadata_model
         # )
 
         query_metadata = {'movie_title': 'Avatar', 'director_name': None, 'genres': None, 'keywords': ['plot', 'like', 'Avatar'], 'year': None, 'content_rating': None, 'same_attributes_as': True}

@@ -3,6 +3,11 @@ from typing import Mapping, Union, List
 from utils import load_yaml_file
 
 
+class OpenAIConfig:
+    def __init__(self, _config: Mapping[str, str]) -> None:
+        self.extract_query_metadata_model = _config["EXTRACT_QUERY_METADATA_MODEL"]
+
+
 class OpensearchConfig:
     def __init__(self, _config: Mapping[str, Union[str, int, List[str]]]) -> None:
         self.host = _config["HOST"]
@@ -21,3 +26,4 @@ class Config:
     def __init__(self, config_path: str = "./config/config.yaml") -> None:
         self.config_file = load_yaml_file(config_path)
         self.opensearch_config = OpensearchConfig(self.config_file["OPENSEARCH_CONFIG"])
+        self.openai_config = OpenAIConfig(self.config_file["OPENAI_CONFIG"])
