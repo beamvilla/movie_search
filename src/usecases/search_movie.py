@@ -25,21 +25,22 @@ class MovieSearcher:
         )
         
         self.movie_index_name = self.opensearch_config.index_name
+        self.hybrid_search_pipeline = self.opensearch_config.hybrid_search_pipeline_name
 
+    def all_metadata_is_none(metadata: Mapping[str, Union[str, bool, List[str]]]) -> bool:
+        for value in metadata.values:
+            if value is True:
+                return False
+            
+            if value is not None:
+                return False
+        return True
+    
     def extract_query_metadata(
         self, 
         query: str,
         model_config: GPTModelConfig
-    ) -> Dict[str, str]:
-        query_metadata = {
-            "movie_title": None,
-            "director_name": None,
-            "genres": None,
-            "keywords": None,
-            "year": None,
-            "content_rating": None,
-            "same_attributes_as": False
-        }
+    ) -> Optional[Dict[str, str]]:
         prompt = get_extract_query_metadata_prompt(query=query)
         response = self.openai_repo.send_request(
             prompt=prompt,
@@ -50,14 +51,21 @@ class MovieSearcher:
         except Exception as err:
             get_logger().error(err)
             get_logger().info("Response: ", response)
-            return query_metadata
+            return None
+        
+        if self.all_metadata_is_none(query_metadata) is None:
+            return None
         
         return query_metadata
     
-    def get_search_results(self, search_query: Dict[str, Any]) -> List[Mapping[str, Any]]:
+    def get_search_results(
+        self, 
+        search_query: Dict[str, Any],
+        endpoint: str
+    ) -> List[Mapping[str, Any]]:
         search_response = self.opensearch_repo.send_request(
             method="get",
-            endpoint=f"{self.movie_index_name}/_search",
+            endpoint=endpoint,
             json_data=search_query
         )  
         status_code = search_response.status_code
@@ -71,10 +79,9 @@ class MovieSearcher:
     
     def search_with_same_attribute(
         self,
-        query: str,
         movie_title: Optional[str],
         director_name: Optional[str]
-    ):
+    ) -> List[Mapping[str, Any]]:
         filter_list = []
         if movie_title is not None:
             filter_list.append(
@@ -107,7 +114,10 @@ class MovieSearcher:
             size=5
         )
         size_per_each_result = self.opensearch_config.size // 5
-        target_attribute_ssearch_results = self.get_search_results(search_query=search_query)
+        target_attribute_ssearch_results = self.get_search_results(
+            search_query=search_query,
+            endpoint=f"{self.movie_index_name}/_search"
+        )
         all_same_attribute_search_results = []
         
         # Use 5 movies description for find semantic search
@@ -121,21 +131,37 @@ class MovieSearcher:
                 k=self.opensearch_config.k,
                 size=size_per_each_result
             )
-            _search_results = self.get_search_results(search_query=search_query)
+            _search_results = self.get_search_results(
+                search_query=search_query,
+                endpoint=f"{self.movie_index_name}/_search"
+            )
             all_same_attribute_search_results.extend(_search_results)
         return all_same_attribute_search_results
     
-    def hybrid_search(self):
-        return
+    def hybrid_search(
+        self,
+        query: str
+    ) -> List[Mapping[str, Any]]:
+        search_query = get_hybrid_search_format(
+            query_text=query,
+            model_id=self.opensearch_config.model_id,
+            excludes_fields=self.opensearch_config.excludes,
+            k=self.opensearch_config.k,
+            size=self.opensearch_config.size
+        )
+        search_results = self.get_search_results(
+            search_query=search_query,
+            endpoint=f"{self.movie_index_name}/_search?search_pipeline={self.hybrid_search_pipeline}"
+        )
+        return search_results
     
-
     def search_agent(
         self,
         query: str,
         query_metadata: Optional[Dict[str, Union[str, List[str], bool]]] = None
     ) -> List[Dict[str, Any]]:
         if query_metadata is None:
-            return self.hybrid_search()
+            return self.hybrid_search(query=query)
         
         movie_title = query_metadata["movie_title"]
         director_name = query_metadata["director_name"]
@@ -144,7 +170,6 @@ class MovieSearcher:
         if same_attributes_as is True and \
             (movie_title is not None or director_name is not None):
             return self.search_with_same_attribute(
-                query=query,
                 movie_title=movie_title,
                 director_name=director_name
             )
