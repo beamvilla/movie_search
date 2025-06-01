@@ -1,7 +1,8 @@
 from typing import Dict, Union, Optional
 import json
 import regex as re
-import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from repository.openai import OpenAIRepository
 from .search_query_format import *
@@ -53,7 +54,12 @@ class MovieSearcher:
         
         return query_metadata
     
-    def get_search_results(self, search_response: requests.Response) -> List[Mapping[str, Any]]:
+    def get_search_results(self, search_query: Dict[str, Any]) -> List[Mapping[str, Any]]:
+        search_response = self.opensearch_repo.send_request(
+            method="get",
+            endpoint=f"{self.movie_index_name}/_search",
+            json_data=search_query
+        )  
         status_code = search_response.status_code
         if status_code == 200:
             search_results = json.loads(search_response.content.decode("utf-8"))
@@ -71,26 +77,53 @@ class MovieSearcher:
     ):
         filter_list = []
         if movie_title is not None:
-            filter_list.append({"match": {"movie_title": movie_title}})
+            filter_list.append(
+                {
+                    "term": {
+                        "movie_title": {
+                          "value": movie_title,
+                          "case_insensitive": True
+                        }
+                    }
+                }
+            )
         
         if director_name is not None:
-            filter_list.append({"match": {"director_name": director_name}})
+            filter_list.append(
+                {
+                    "term": {
+                        "director_name": {
+                          "value": director_name,
+                          "case_insensitive": True
+                        }
+                    }
+                }
+            )
 
-        search_query = get_semantic_search_with_must_not_term_format(
-            query_text=query,
-            model_id=self.opensearch_config.model_id,
+        # First filter 5 movies of the target attribute
+        search_query = get_filter_search_format(
             filter_list=filter_list,
             excludes_fields=self.opensearch_config.excludes,
-            k=self.opensearch_config.k,
-            size=self.opensearch_config.size
+            size=5
         )
-        search_response = self.opensearch_repo.send_request(
-            method="get",
-            endpoint=f"{self.movie_index_name}/_search",
-            json_data=search_query
-        )    
-        search_results = self.get_search_results(search_response=search_response)
-        return search_results
+        size_per_each_result = self.opensearch_config.size // 5
+        target_attribute_ssearch_results = self.get_search_results(search_query=search_query)
+        all_same_attribute_search_results = []
+        
+        # Use 5 movies description for find semantic search
+        for target_attribute_ssearch_result in target_attribute_ssearch_results:
+            movie_description = target_attribute_ssearch_result["_source"]["movie_description"]
+            search_query = get_semantic_search_with_must_not_term_format(
+                query_text=movie_description,
+                model_id=self.opensearch_config.model_id,
+                filter_list=filter_list,
+                excludes_fields=self.opensearch_config.excludes,
+                k=self.opensearch_config.k,
+                size=size_per_each_result
+            )
+            _search_results = self.get_search_results(search_query=search_query)
+            all_same_attribute_search_results.extend(_search_results)
+        return all_same_attribute_search_results
     
     def hybrid_search(self):
         return
@@ -185,6 +218,8 @@ class MovieSearcher:
             query_metadata=query_metadata,
             query=query
         )
+        print(json.dumps(search_results, indent=4, ensure_ascii=False))
+        return
 
         if self.config.rerank_search is True:
             search_results = self.rerank(
