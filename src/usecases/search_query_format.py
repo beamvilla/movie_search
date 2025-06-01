@@ -48,32 +48,38 @@ def get_hybrid_search_format(
     model_id: str,
     excludes_fields: List[str] = [],
     k: int = 100,
-    size: int = 100
+    size: int = 100,
+    filter_list: List[str] = []
 ) -> Dict[str, Any]:
     return {
         "_source": {
             "excludes": excludes_fields
         },
         "query": {
-            "hybrid": {
-                "queries": [
-                    {
-                        "match": {
-                            "movie_description": {
-                                "query": query_text
+            "bool": {
+                "must": {
+                    "hybrid": {
+                        "queries": [
+                            {
+                                "match": {
+                                    "movie_description": {
+                                        "query": query_text
+                                    }
+                                }
+                            },
+                            {
+                                "neural": {
+                                    "movie_description_embedding": {
+                                        "query_text": query_text,
+                                        "model_id": model_id,
+                                        "k": k
+                                    }
+                                }
                             }
-                        }
-                    },
-                    {
-                        "neural": {
-                            "movie_description_embedding": {
-                                "query_text": query_text,
-                                "model_id": model_id,
-                                "k": k
-                            }
-                        }
+                        ]
                     }
-                ]
+                },
+                "filter": filter_list
             }
         },
         "size": size
@@ -109,3 +115,45 @@ def get_semantic_search_with_must_not_term_format(
         "size": size
     }
  
+
+def get_hybrid_search_with_must_not_term_format(
+    query_text: str,
+    model_id: str,
+    filter_list: List[str] = [],
+    excludes_fields: List[str] = [],
+    k: int = 100,
+    size: int = 100
+) -> Dict[str, Any]:
+    return {
+        "_source": {
+            "excludes": excludes_fields
+        },
+        "query": {
+            "hybrid": {
+                "queries": [
+                    {
+                        "match": {
+                            "movie_description": {
+                                "query": query_text
+                            }
+                        }
+                    },
+                    {
+                        "neural": {
+                            "movie_description_embedding": {
+                                "query_text": query_text,
+                                "model_id": model_id,
+                                "k": k
+                            }
+                        }
+                    }
+                ],
+                "filter": {
+                    "bool": {
+                        "must_not": filter_list
+                    }
+                }
+            }
+        },
+        "size": size
+    }

@@ -80,7 +80,8 @@ class MovieSearcher:
     def search_with_same_attribute(
         self,
         movie_title: Optional[str],
-        director_name: Optional[str]
+        director_name: Optional[str],
+        n_pick_attr: int = 5
     ) -> List[Mapping[str, Any]]:
         filter_list = []
         if movie_title is not None:
@@ -107,13 +108,13 @@ class MovieSearcher:
                 }
             )
 
-        # First filter 5 movies of the target attribute
+        # First filter x movies of the target attribute
         search_query = get_filter_search_format(
             filter_list=filter_list,
             excludes_fields=self.opensearch_config.excludes,
-            size=5
+            size=n_pick_attr
         )
-        size_per_each_result = self.opensearch_config.size // 5
+        size_per_each_result = self.opensearch_config.size // n_pick_attr
         target_attribute_ssearch_results = self.get_search_results(
             search_query=search_query,
             endpoint=f"{self.movie_index_name}/_search"
@@ -123,7 +124,7 @@ class MovieSearcher:
         # Use 5 movies description for find semantic search
         for target_attribute_ssearch_result in target_attribute_ssearch_results:
             movie_description = target_attribute_ssearch_result["_source"]["movie_description"]
-            search_query = get_semantic_search_with_must_not_term_format(
+            search_query = get_hybrid_search_with_must_not_term_format(
                 query_text=movie_description,
                 model_id=self.opensearch_config.model_id,
                 filter_list=filter_list,
@@ -133,7 +134,7 @@ class MovieSearcher:
             )
             _search_results = self.get_search_results(
                 search_query=search_query,
-                endpoint=f"{self.movie_index_name}/_search"
+                endpoint=f"{self.movie_index_name}/_search?search_pipeline={self.hybrid_search_pipeline}"
             )
             all_same_attribute_search_results.extend(_search_results)
         return all_same_attribute_search_results
@@ -237,7 +238,7 @@ class MovieSearcher:
                 model_config=self.openai_config.extract_query_metadata_model
             )
        
-        query_metadata = {'movie_title': None, 'director_name': 'Nolan', 'genres': None, 'keywords': ['plot', 'Nolan', 'director'], 'year': None, 'content_rating': None, 'same_attributes_as': True}
+        query_metadata = {'movie_title': None, 'director_name': 'Nolan', 'genres': None, 'year': None, 'content_rating': None, 'same_attributes_as': True}
 
         search_results = self.search_agent(
             query_metadata=query_metadata,
