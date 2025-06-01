@@ -2,31 +2,27 @@ import pandas as pd
 from dotenv import load_dotenv
 from typing import Optional
 from tqdm import tqdm
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from src.utils.common import return_none_when_is_nan
-from repository.opensearch import OpensearchRepository, LOCALHOST, OPENSEARCH_PORT
+from repository.opensearch import OpensearchRepository
+from config.index_docs_config import IndexDocsConfig
 
 
 class OpensearchIndexer:
     def __init__(
         self,
-        index_name: str,
-        dataset_path: str,
-        opensearch_host: str = LOCALHOST,
-        opensearch_port: int = OPENSEARCH_PORT,
-        opensearch_user_env: str = "user",
-        opensearch_password_env: str = "password"
+        dataset_path: str
     ) -> None:
         load_dotenv()
 
+        self.config = IndexDocsConfig()
         self.movie_df = pd.read_csv(dataset_path)
         self.opensearch_repo = OpensearchRepository(
-            host=opensearch_host,
-            port=opensearch_port,
-            user_env=opensearch_user_env,
-            password_env=opensearch_password_env
+            config=self.config.opensearch_config
         )
-        self.index_name = index_name
+        self.index_name = self.config.opensearch_config.index_name
 
     def send_data_to_index(self, limit: Optional[int] = None):
         if limit is None:
@@ -34,13 +30,21 @@ class OpensearchIndexer:
 
         idx = 1
 
-        for row in tqdm(limit):
+        for row in tqdm(range(limit)):
             genres_text = None
             plot_keywords_text = None
             movie_description = None
 
             movie_title     = return_none_when_is_nan(self.movie_df.loc[row, "movie_title"])
+
+            if movie_title is not None:
+                movie_title = movie_title.strip()
+            
             director_name   = return_none_when_is_nan(self.movie_df.loc[row, "director_name"])
+            
+            if director_name is not None:
+                director_name = director_name.strip()
+
             movie_imdb_link = return_none_when_is_nan(self.movie_df.loc[row, "movie_imdb_link"])
             content_rating  = return_none_when_is_nan(self.movie_df.loc[row, "content_rating"])
             genres          = return_none_when_is_nan(self.movie_df.loc[row, "genres"])
@@ -64,8 +68,8 @@ class OpensearchIndexer:
             
             json_data = {
                 "id": str(idx),
-                "movie_title": movie_title.strip(),
-                "director_name": director_name.strip(),
+                "movie_title": movie_title,
+                "director_name": director_name,
                 "genres": genres,
                 "plot_keywords": plot_keywords,
                 "title_year": title_year,
@@ -79,15 +83,3 @@ class OpensearchIndexer:
                 json_data=json_data
             )
             idx += 1
-    
-
-if __name__ == "__main__":
-    opensearch_indexer = OpensearchIndexer(
-        index_name="movie-search-index",
-        dataset_path="./data/movie_dataset.csv",
-        opensearch_host="https://localhost",
-        opensearch_port=9200,
-        opensearch_user_env="opensearch_user",
-        opensearch_password_env="opensearch_password"
-    )
-    opensearch_indexer.send_data_to_index(limit=200)

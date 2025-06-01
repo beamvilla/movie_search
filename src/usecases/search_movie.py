@@ -1,4 +1,4 @@
-from typing import Dict, Union, Optional, Tuple
+from typing import Dict, Union, Optional
 import json
 import regex as re
 import requests
@@ -71,24 +71,10 @@ class MovieSearcher:
     ):
         filter_list = []
         if movie_title is not None:
-            filter_list.append({
-                "term": {
-                    "movie_title": {
-                        "value": movie_title,
-                        "case_insensitive": True
-                    }
-                }
-            })
+            filter_list.append({"match": {"movie_title": movie_title}})
         
         if director_name is not None:
-            filter_list.append({
-                "term": {
-                    "director_name": {
-                        "value": director_name,
-                        "case_insensitive": True
-                    }
-                }
-            })
+            filter_list.append({"match": {"director_name": director_name}})
 
         search_query = get_semantic_search_with_must_not_term_format(
             query_text=query,
@@ -106,11 +92,18 @@ class MovieSearcher:
         search_results = self.get_search_results(search_response=search_response)
         return search_results
     
+    def hybrid_search(self):
+        return
+    
+
     def search_agent(
-        self, 
-        query_metadata: Dict[str, Union[str, List[str], bool]],
-        query: str
+        self,
+        query: str,
+        query_metadata: Optional[Dict[str, Union[str, List[str], bool]]] = None
     ) -> List[Dict[str, Any]]:
+        if query_metadata is None:
+            return self.hybrid_search()
+        
         movie_title = query_metadata["movie_title"]
         director_name = query_metadata["director_name"]
         same_attributes_as = query_metadata["same_attributes_as"]
@@ -178,13 +171,15 @@ class MovieSearcher:
 
     def search(self, query: str):
         summarized_search_results = None
-        
-        # query_metadata = self.extract_query_metadata(
-        #     query=query,
-        #     model_config=self.openai_config.extract_query_metadata_model
-        # )
+        query_metadata = None
+
+        if self.config.extract_query_metadata is True:
+            query_metadata = self.extract_query_metadata(
+                query=query,
+                model_config=self.openai_config.extract_query_metadata_model
+            )
        
-        query_metadata = {'movie_title': 'Avatar', 'director_name': None, 'genres': None, 'keywords': ['plot', 'like', 'Avatar'], 'year': None, 'content_rating': None, 'same_attributes_as': True}
+        query_metadata = {'movie_title': None, 'director_name': 'Nolan', 'genres': None, 'keywords': ['plot', 'Nolan', 'director'], 'year': None, 'content_rating': None, 'same_attributes_as': True}
 
         search_results = self.search_agent(
             query_metadata=query_metadata,
