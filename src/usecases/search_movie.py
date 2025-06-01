@@ -27,8 +27,8 @@ class MovieSearcher:
         self.movie_index_name = self.opensearch_config.index_name
         self.hybrid_search_pipeline = self.opensearch_config.hybrid_search_pipeline_name
 
-    def all_metadata_is_none(metadata: Mapping[str, Union[str, bool, List[str]]]) -> bool:
-        for value in metadata.values:
+    def all_metadata_is_none(self, metadata: Mapping[str, Union[str, bool, List[str]]]) -> bool:
+        for value in metadata.values():
             if value is True:
                 return False
             
@@ -41,6 +41,7 @@ class MovieSearcher:
         query: str,
         model_config: GPTModelConfig
     ) -> Optional[Dict[str, str]]:
+        get_logger().info("Extracting metadata from query.")
         prompt = get_extract_query_metadata_prompt(query=query)
         response = self.openai_repo.send_request(
             prompt=prompt,
