@@ -7,7 +7,7 @@ OPENSEARCH_CONFIG:
   EXCLUDES:
     - movie_description_embedding
   K: 20
-  SIZE: 20
+  SIZE: 5
   INDEX_NAME: movie-search-index
   HYBRID_SEARCH_PIPELINE_NAME: hybrid-search-pipeline
 
@@ -18,7 +18,10 @@ OPENAI_CONFIG:
   SUMMARIZE_SEARCH:
     MODEL: gpt-4.1
     TEMPERATURE: 0.8
+  RERANKER:
+    MODEL: gpt-4o-mini
+    TEMPERATURE: 0.0
 
-SUMMARIZE_SEARCH: true
+SUMMARIZE_SEARCH: false
 EXTRACT_QUERY_METADATA: true
 RERANK_SEARCH: true

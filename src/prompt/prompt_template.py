@@ -37,3 +37,18 @@ def get_summarize_search_results_prompt(
     all search movie description results:
     {all_search_movie_description_results}
     """
+
+
+def get_rerank_prompt(query: str, description: str) -> str:
+    return f"""
+    Rate the relevance of this description for the given query.
+    Consider these aspects:
+    - Direct answer relevance (0-5)
+    - Information completeness (0-3)
+    - Factual accuracy (0-2)
+    
+    Query: {query}
+    Description: {description}
+    
+    Provide scores for each aspect and a total score out of 10.
+    """

@@ -13,6 +13,7 @@ class OpenAIConfig:
     def __init__(self, _config: Mapping[str, str]) -> None:
         self.extract_query_metadata_model = GPTModelConfig(_config=_config["EXTRACT_QUERY_METADATA_MODEL"])
         self.summarize_search = GPTModelConfig(_config=_config["SUMMARIZE_SEARCH"])
+        self.reranker = GPTModelConfig(_config=_config["RERANKER"])
 
 
 class OpensearchConfig:

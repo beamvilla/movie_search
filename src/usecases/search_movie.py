@@ -1,5 +1,6 @@
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, Tuple
 import json
+import regex as re
 import requests
 
 from repository.openai import OpenAIRepository
@@ -147,6 +148,33 @@ class MovieSearcher:
             model_config=model_config
         )
         return summarized_search_results
+    
+    def rerank(
+        self,
+        query: str, 
+        documents: List[Mapping[str, Any]]
+    ) -> List[Mapping[str, Any]]:
+        get_logger().info("Reranking search results with LLM.")
+        results = []
+        for doc in documents:
+            description = doc["_source"]["movie_description"]
+            prompt = get_rerank_prompt(query=query, description=description)
+            reranked_score_result = self.openai_repo.send_request(
+                prompt=prompt, 
+                model_config=self.openai_config.reranker
+            )
+            match = re.search(r"Total score:\s*(\d+)", reranked_score_result)
+
+            if match:
+                reranked_score = int(match.group(1))
+            else:
+                get_logger().error("Rerank LLM answer wrong format with : ", reranked_score_result)
+                reranked_score = 0
+            results.append((reranked_score, doc))
+        
+        sorted_reranked_score_results = sorted(results, key=lambda x: x[0], reverse=True)
+        sorted_documents = [doc for _, doc in sorted_reranked_score_results]
+        return sorted_documents
 
     def search(self, query: str):
         summarized_search_results = None
@@ -162,6 +190,12 @@ class MovieSearcher:
             query_metadata=query_metadata,
             query=query
         )
+
+        if self.config.rerank_search is True:
+            search_results = self.rerank(
+                query=query,
+                documents=search_results
+            )
         
         if self.config.summarize_search is True:
             summarized_search_results = self.summarize_search(
