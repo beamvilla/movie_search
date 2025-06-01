@@ -88,11 +88,8 @@ class MovieSearcher:
         if movie_title is not None:
             filter_list.append(
                 {
-                    "term": {
-                        "movie_title": {
-                          "value": movie_title,
-                          "case_insensitive": True
-                        }
+                    "match": {
+                        "movie_title": movie_title
                     }
                 }
             )
@@ -100,11 +97,8 @@ class MovieSearcher:
         if director_name is not None:
             filter_list.append(
                 {
-                    "term": {
-                        "director_name": {
-                          "value": director_name,
-                          "case_insensitive": True
-                        }
+                    "match": {
+                        "director_name": director_name
                     }
                 }
             )
@@ -270,15 +264,14 @@ class MovieSearcher:
             get_logger().info("Metadata found")
             get_logger().info(json.dumps(query_metadata, indent=4, ensure_ascii=False))
        
-        query_metadata = {
-            "movie_title": "harry potter",
-            "director_name": None,
-            "genres": None,
-            "year": None,
-            "content_rating": None,
-            "same_attributes_as": True
-        }
-
+        # query_metadata = {
+        #     "movie_title": "harry potter",
+        #     "director_name": None,
+        #     "genres": None,
+        #     "year": None,
+        #     "content_rating": None,
+        #     "same_attributes_as": True
+        # }
         search_results = self.search_agent(query_metadata=query_metadata, query=query)
        
         if self.config.rerank_search is True:

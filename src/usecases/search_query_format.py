@@ -80,9 +80,7 @@ def get_hybrid_search_format(
         "size": size
     }
     if len(filter_list) > 0:
-       query_format["query"]["hybrid"]["filter"] = {
-            "bool": {"must": filter_list}
-        }
+       query_format["query"]["hybrid"]["filter"] = {"bool": {"must": filter_list}}
     return query_format
 
 
