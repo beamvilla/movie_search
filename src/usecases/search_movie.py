@@ -54,7 +54,7 @@ class MovieSearcher:
             get_logger().info("Response: ", response)
             return None
         
-        if self.all_metadata_is_none(query_metadata) is None:
+        if self.all_metadata_is_none(query_metadata):
             return None
         
         return query_metadata
@@ -264,14 +264,6 @@ class MovieSearcher:
             get_logger().info("Metadata found")
             get_logger().info(json.dumps(query_metadata, indent=4, ensure_ascii=False))
        
-        # query_metadata = {
-        #     "movie_title": "harry potter",
-        #     "director_name": None,
-        #     "genres": None,
-        #     "year": None,
-        #     "content_rating": None,
-        #     "same_attributes_as": True
-        # }
         search_results = self.search_agent(query_metadata=query_metadata, query=query)
        
         if self.config.rerank_search is True:
