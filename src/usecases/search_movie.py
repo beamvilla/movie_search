@@ -1,4 +1,4 @@
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, Tuple
 import json
 import regex as re
 import urllib3
@@ -115,6 +115,7 @@ class MovieSearcher:
             excludes_fields=self.opensearch_config.excludes,
             size=n_pick_attr
         )
+
         size_per_each_result = self.opensearch_config.size // n_pick_attr
         target_attribute_ssearch_results = self.get_search_results(
             search_query=search_query,
@@ -142,14 +143,16 @@ class MovieSearcher:
     
     def hybrid_search(
         self,
-        query: str
+        query: str,
+        filter_list: List[Mapping[str, Any]] = []
     ) -> List[Mapping[str, Any]]:
         search_query = get_hybrid_search_format(
             query_text=query,
             model_id=self.opensearch_config.model_id,
             excludes_fields=self.opensearch_config.excludes,
             k=self.opensearch_config.k,
-            size=self.opensearch_config.size
+            size=self.opensearch_config.size,
+            filter_list=filter_list
         )
         search_results = self.get_search_results(
             search_query=search_query,
@@ -163,18 +166,44 @@ class MovieSearcher:
         query_metadata: Optional[Dict[str, Union[str, List[str], bool]]] = None
     ) -> List[Dict[str, Any]]:
         if query_metadata is None:
-            return self.hybrid_search(query=query)
+            return self.hybrid_search(query=query, filter_list=[])
         
         movie_title = query_metadata["movie_title"]
         director_name = query_metadata["director_name"]
         same_attributes_as = query_metadata["same_attributes_as"]
+        genres = query_metadata["genres"]
+        title_year = query_metadata["year"]
+        content_rating = query_metadata["content_rating"]
+        search_results = []
+
+        filter_list = []
+
+        if movie_title is not None:
+            filter_list.append({"match": {"movie_title": movie_title}})
+            
+        if director_name is not None:
+            filter_list.append({"match": {"director_name": director_name}})
+
+        if genres is not None:
+            for genre in genres:
+                filter_list.append({"match": { "genres": genre}})
+
+        if title_year is not None:
+            filter_list.append({"term": {"title_year": title_year}})
+
+        if content_rating is not None:
+            filter_list.append({"term": {"content_rating": content_rating}})
 
         if same_attributes_as is True and \
             (movie_title is not None or director_name is not None):
-            return self.search_with_same_attribute(
-                movie_title=movie_title,
-                director_name=director_name
-            )
+                search_results = self.search_with_same_attribute(
+                    movie_title=movie_title,
+                    director_name=director_name
+                )
+                
+        if len(search_results) == 0:
+            search_results = self.hybrid_search(query=query, filter_list=filter_list)
+        return search_results
         
     def summarize_search(
         self, 
@@ -229,7 +258,7 @@ class MovieSearcher:
         sorted_documents = [doc for _, doc in sorted_reranked_score_results]
         return sorted_documents
 
-    def search(self, query: str):
+    def search(self, query: str) -> Tuple[List[Mapping[str, Any]], Optional[str]]:
         summarized_search_results = None
         query_metadata = None
 
@@ -238,16 +267,20 @@ class MovieSearcher:
                 query=query,
                 model_config=self.openai_config.extract_query_metadata_model
             )
+            get_logger().info("Metadata found")
+            get_logger().info(json.dumps(query_metadata, indent=4, ensure_ascii=False))
        
-        query_metadata = {'movie_title': None, 'director_name': 'Nolan', 'genres': None, 'year': None, 'content_rating': None, 'same_attributes_as': True}
+        query_metadata = {
+            "movie_title": "harry potter",
+            "director_name": None,
+            "genres": None,
+            "year": None,
+            "content_rating": None,
+            "same_attributes_as": True
+        }
 
-        search_results = self.search_agent(
-            query_metadata=query_metadata,
-            query=query
-        )
-        print(json.dumps(search_results, indent=4, ensure_ascii=False))
-        return
-
+        search_results = self.search_agent(query_metadata=query_metadata, query=query)
+       
         if self.config.rerank_search is True:
             search_results = self.rerank(
                 query=query,
@@ -260,7 +293,6 @@ class MovieSearcher:
                 search_results=search_results,
                 model_config=self.openai_config.summarize_search
             )
-            print(summarized_search_results)
-
-
+        return search_results, summarized_search_results
+            
            
