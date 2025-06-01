@@ -256,6 +256,7 @@ class MovieSearcher:
         summarized_search_results = None
         query_metadata = None
 
+        # Extract entity from search query
         if self.config.extract_query_metadata is True:
             query_metadata = self.extract_query_metadata(
                 query=query,
@@ -264,14 +265,17 @@ class MovieSearcher:
             get_logger().info("Metadata found")
             get_logger().info(json.dumps(query_metadata, indent=4, ensure_ascii=False))
        
+        # Search by scenerio
         search_results = self.search_agent(query_metadata=query_metadata, query=query)
        
+        # Rerank search results
         if self.config.rerank_search is True:
             search_results = self.rerank(
                 query=query,
                 documents=search_results
             )
         
+        # Summarize search results
         if self.config.summarize_search is True:
             summarized_search_results = self.summarize_search(
                 query=query,
