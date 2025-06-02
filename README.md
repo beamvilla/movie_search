@@ -1,12 +1,16 @@
 # 🌟 Movie search 🌟
 Search movie with LLM
 
-# 🚀 Build env
-``` bash
-$ docker build -f docker/Dockerfile -t movie_search:latest .
+# 🚀 Start search movie service
+```
+docker-compose -f docker-compose.yml up
+
+# If want to re-build image
+docker-compose -f docker-compose.yml up --build
 ```
 
-# 🚀 Start env
-``` bash
-$ docker run -it --net=host --rm -v $(pwd):/movie_search movie_search:latest /bin/bash
+## Test result
+```
+Use postman to test API response
+![alt text](image.png)
 ```

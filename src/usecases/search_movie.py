@@ -4,13 +4,13 @@ import regex as re
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from repository.openai import OpenAIRepository
+from src.repository.openai import OpenAIRepository
 from .search_query_format import *
-from prompt.prompt_template import *
-from utils.common import convert_text_to_json
-from utils.log_utils import get_logger
-from repository.opensearch import OpensearchRepository
-from config.config import Config, GPTModelConfig
+from src.prompt.prompt_template import *
+from src.utils.common import convert_text_to_json
+from src.utils.log_utils import get_logger
+from src.repository.opensearch import OpensearchRepository
+from src.config.config import Config, GPTModelConfig
 
 
 class MovieSearcher:

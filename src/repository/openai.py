@@ -2,8 +2,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from typing import Optional, Union, List, Dict
 
-from utils.log_utils import get_logger
-from config.config import GPTModelConfig
+from src.utils.log_utils import get_logger
+from src.config.config import GPTModelConfig
 
 
 class OpenAIRepository:

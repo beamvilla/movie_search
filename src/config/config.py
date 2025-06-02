@@ -1,6 +1,6 @@
 from typing import Mapping, Union, List
 
-from utils import load_yaml_file
+from src.utils import load_yaml_file
 
 
 class GPTModelConfig:

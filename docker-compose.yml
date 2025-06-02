@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  movie_search:
+    container_name: movie_search
+    image: movie_search:latest
+    build:
+       context: .
+       dockerfile: docker/Dockerfile
+    volumes:
+      - .:/movie_search
+    ports:
+      - "8000:8000"
+    command: ["python3", "-m", "uvicorn", "src.main:app", "--host=0.0.0.0", "--port=8000"]

@@ -5,7 +5,7 @@ from requests.auth import HTTPBasicAuth
 from typing import Mapping, Any
 from dataclasses import dataclass
 
-from config.config import OpensearchConfig
+from src.config.config import OpensearchConfig
 
 
 JSON_HEADERS = {"Content-Type": "application/json; charset=UTF-8"}

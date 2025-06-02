@@ -1,16 +1,24 @@
-import json
+from fastapi import FastAPI
 
-from usecases.search_movie import MovieSearcher
-from config.config import Config
+from src.usecases.search_movie import MovieSearcher
+from src.config.schema import APIResponseBody, SearchRequest
+from src.config.config import Config
+
 
 config = Config()
+app = FastAPI()
 
-if __name__ == "__main__":
+@app.post(
+    "/search_movie", 
+    response_model=APIResponseBody
+)
+async def search_movie(query: SearchRequest):
     movie_searcher = MovieSearcher(config=config)
-    search_results, summarized_search_results = movie_searcher.search(
-        query="หนังที่คล้ายเรื่อง harry potter"
+    search_results, search_summarize = movie_searcher.search(
+        query=query
     )
-    print("============== SEARCH RESULTS ==============\n")
-    print(json.dumps(search_results, indent=4, ensure_ascii=False))
-    print("\n\n============== SUMMARIZE ==============\n")
-    print(summarized_search_results)
+    return {
+        "success": True,
+        "search_results": search_results,
+        "search_summarize": search_summarize
+    }
