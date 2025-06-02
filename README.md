@@ -16,7 +16,7 @@ docker-compose -f docker-compose.yml up --build
 ## 4. Test result
 ```
 Use postman to test API response
-![alt text]([image.png](https://github.com/beamvilla/movie_search/blob/master/image.png))
+![alt text](https://github.com/beamvilla/movie_search/blob/master/image.png?raw=true)
 ```
 
 # 🚀 Code details
