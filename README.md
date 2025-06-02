@@ -14,10 +14,9 @@ docker-compose -f docker-compose.yml up --build
 ```
 
 ## 4. Test result
-```
 Use postman to test API response
 ![alt text](https://github.com/beamvilla/movie_search/blob/master/image.png)
-```
+
 
 # 🚀 Code details
 - Search movie logics provided in **/src/usecases/search_movie.py**
