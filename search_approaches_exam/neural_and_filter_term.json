@@ -1,0 +1,30 @@
+{
+    "_source": {
+        "excludes": [
+            "movie_description_embedding"
+        ]
+    },
+    "query": {
+        "bool": {
+            "must": {
+                "neural": {
+                    "movie_description_embedding": {
+                        "query_text": "robot",
+                        "k": 100,
+                        "model_id": "xxx"
+                    }
+                }
+            },
+            "filter": [
+                {
+                    "term": {
+                        "director_name": {
+                          "value": "michael bay",
+                          "case_insensitive": true
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

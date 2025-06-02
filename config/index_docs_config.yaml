@@ -1,0 +1,7 @@
+OPENSEARCH_CONFIG:
+  HOST: https://localhost
+  PORT: 9200
+  USER_ENV: opensearch_user
+  USER_PASSWORD_ENV: opensearch_password
+  MODEL_ID: _OAVIpcBpsdikrt2f51X
+  INDEX_NAME: movie-search-index

@@ -1,0 +1,27 @@
+OPENSEARCH_CONFIG:
+  HOST: https://localhost
+  PORT: 9200
+  USER_ENV: opensearch_user
+  USER_PASSWORD_ENV: opensearch_password
+  MODEL_ID: _OAVIpcBpsdikrt2f51X
+  EXCLUDES:
+    - movie_description_embedding
+  K: 20
+  SIZE: 5
+  INDEX_NAME: movie-search-index
+  HYBRID_SEARCH_PIPELINE_NAME: hybrid-search-pipeline
+
+OPENAI_CONFIG:
+  EXTRACT_QUERY_METADATA_MODEL:
+    MODEL: gpt-4.1
+    TEMPERATURE: 0.1
+  SUMMARIZE_SEARCH:
+    MODEL: gpt-4o-mini
+    TEMPERATURE: 0.8
+  RERANKER:
+    MODEL: gpt-4o-mini
+    TEMPERATURE: 0.0
+
+SUMMARIZE_SEARCH: true
+EXTRACT_QUERY_METADATA: true
+RERANK_SEARCH: true
